@@ -1,0 +1,74 @@
+<?php
+
+/*
+ * Implements hook_rules_action_info().
+ */
+function easybrandingpdf_rules_action_info() {
+  $actions = array();
+
+  $actions['easybrandingpdf_save_pdf'] = array(
+    'label' => t('Saves the content of the node in PDF file'),
+    'group' => t('Easybranding'),
+    'parameter' => array(
+      'node' => array(
+        'type' => 'node',
+        'label' => t('The node to pass to the template'),
+      ),
+      'path' => array(
+        'type' => 'text',
+        'label' => t('Path to save PDF file'),
+      ),
+      'overwrite_existing_file' => array(
+        'type' => 'boolean',
+        'label' => t('Overwrite PDF file if it exists already'),
+      ),
+      'template' => array(
+        'type' => 'text',
+        'label' => t('Path to the template file'),
+        'description' => t('Note: when using images should be saved in the same folder as the template file
+                            specified in this setting.'),
+      ),
+      'paper_format' => array(
+        'type' => 'text',
+        'label' => t('Paper format'),
+        'options list' => 'easybrandingpdf_paper_formats',
+        'optional' => TRUE,
+        'default value' => 'A4',
+      ),
+      'paper_orientation' => array(
+        'type' => 'text',
+        'label' => t('Paper orientation'),
+        'options list' => 'easybrandingpdf_paper_orientation',
+        'optional' => TRUE,
+        'default value' => 'portrait',
+      ),
+    ),
+  );
+
+  return $actions;
+}
+
+function easybrandingpdf_save_pdf($node, $path, $overwrite_existing_file, $template, $paper_format, $paper_orientation) {
+  require_once libraries_get_path('dompdf') . '/dompdf_config.inc.php';
+
+  if (!file_exists($path) || $overwrite_existing_file) {
+    $html = theme_render_template($template, array('node' => $node));
+
+    $dompdf = new DOMPDF();
+    $dompdf->set_paper($paper_format, $paper_orientation);
+    $dompdf->load_html($html);
+    $dompdf->set_base_path(dirname($template));
+    $dompdf->render();
+
+    file_prepare_directory(dirname($path), FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
+    file_put_contents($path, $dompdf->output());
+  }
+}
+
+function easybrandingpdf_paper_formats() {
+  return array('A4' => t('A4'), 'letter' => t('letter'), 'legal' => t('legal'));
+}
+
+function easybrandingpdf_paper_orientation() {
+  return array('portrait' => t('portrait'), 'landscape' => t('landscape'));
+}

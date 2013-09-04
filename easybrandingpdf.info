@@ -1,0 +1,6 @@
+name = Easybrandingpdf
+description = Creates a pdf invoice based on a node.
+package = "Easybranding"
+core = 7.x
+dependencies[] = libraries
+dependencies[] = rules
